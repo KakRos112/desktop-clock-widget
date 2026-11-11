@@ -1,0 +1,130 @@
+<Window x:Class="ClockWidget.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Pengaturan Jam" Width="460" SizeToContent="Height"
+        ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
+        ThemeMode="System">
+    <Window.Resources>
+        <Style x:Key="Label" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,14,0,6"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="22,8,22,22">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="18"/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Posisi -->
+        <StackPanel Grid.Row="0" Grid.Column="0">
+            <TextBlock Text="Posisi" Style="{StaticResource Label}"/>
+            <UniformGrid x:Name="PositionGrid" Rows="3" Columns="3" Width="150" HorizontalAlignment="Left">
+                <ToggleButton Content="↖" Tag="TopLeft" ToolTip="Kiri atas"/>
+                <ToggleButton Content="↑" Tag="Top" ToolTip="Atas"/>
+                <ToggleButton Content="↗" Tag="TopRight" ToolTip="Kanan atas"/>
+                <ToggleButton Content="←" Tag="Left" ToolTip="Kiri"/>
+                <ToggleButton Content="●" Tag="Center" ToolTip="Tengah"/>
+                <ToggleButton Content="→" Tag="Right" ToolTip="Kanan"/>
+                <ToggleButton Content="↙" Tag="BottomLeft" ToolTip="Kiri bawah"/>
+                <ToggleButton Content="↓" Tag="Bottom" ToolTip="Bawah"/>
+                <ToggleButton Content="↘" Tag="BottomRight" ToolTip="Kanan bawah"/>
+            </UniformGrid>
+            <TextBlock x:Name="PositionHint" Margin="0,6,0,0" Opacity="0.7" FontSize="12" TextWrapping="Wrap"/>
+        </StackPanel>
+
+        <!-- Warna + lapisan -->
+        <StackPanel Grid.Row="0" Grid.Column="2">
+            <TextBlock Text="Warna" Style="{StaticResource Label}"/>
+            <UniformGrid x:Name="ColorPanel" Columns="5" HorizontalAlignment="Left"/>
+            <ToggleButton x:Name="CustomColorButton" HorizontalAlignment="Left" Padding="8,6" Click="OnCustomColor"
+                          ToolTip="Pilih warna sendiri">
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse x:Name="CustomSwatch" Width="18" Height="18" Stroke="#60808080" StrokeThickness="1"/>
+                    <TextBlock Text="Warna lain…" Margin="8,0,2,0" VerticalAlignment="Center"/>
+                </StackPanel>
+            </ToggleButton>
+            <Button HorizontalAlignment="Left" Padding="8,6" Margin="0,6,0,0" Click="OnPickFromScreen"
+                    AutomationProperties.Name="Ambil dari layar"
+                    ToolTip="Pipet: klik piksel mana pun di layar untuk mengambil warnanya">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xEF3C;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16"
+                               Width="18" TextAlignment="Center" VerticalAlignment="Center"/>
+                    <TextBlock Text="Ambil dari layar" Margin="8,0,2,0" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Grid.Column="0">
+            <TextBlock Text="Monitor" Style="{StaticResource Label}"/>
+            <ComboBox x:Name="MonitorBox" HorizontalAlignment="Stretch" SelectionChanged="OnChanged"/>
+        </StackPanel>
+        <StackPanel Grid.Row="1" Grid.Column="2">
+            <TextBlock Text="Lapisan" Style="{StaticResource Label}"/>
+            <ComboBox x:Name="LayerBox" HorizontalAlignment="Stretch" SelectionChanged="OnChanged">
+                <ComboBoxItem Content="Selalu di atas"/>
+                <ComboBoxItem Content="Menempel di desktop"/>
+            </ComboBox>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Grid.Column="0">
+            <TextBlock Text="Style" Style="{StaticResource Label}"/>
+            <ComboBox x:Name="StyleBox" HorizontalAlignment="Stretch" SelectionChanged="OnChanged">
+                <ComboBoxItem Content="Digital minimal"/>
+                <ComboBoxItem Content="Analog"/>
+                <ComboBoxItem Content="Flip"/>
+            </ComboBox>
+        </StackPanel>
+        <StackPanel Grid.Row="2" Grid.Column="2">
+            <TextBlock Text="Animasi" Style="{StaticResource Label}"/>
+            <ComboBox x:Name="AnimationBox" HorizontalAlignment="Stretch" SelectionChanged="OnChanged">
+                <ComboBoxItem Content="Fade (memudar)"/>
+                <ComboBoxItem Content="Slide (bergeser)"/>
+                <ComboBoxItem Content="Flip (membalik)"/>
+                <ComboBoxItem Content="Langsung (tanpa animasi)"/>
+            </ComboBox>
+        </StackPanel>
+
+        <StackPanel Grid.Row="3" Grid.Column="0">
+            <TextBlock Text="Tampilan" Style="{StaticResource Label}"/>
+            <ComboBox x:Name="ShowBox" HorizontalAlignment="Stretch" SelectionChanged="OnChanged">
+                <ComboBoxItem Content="Jam saja"/>
+                <ComboBoxItem Content="Jam + tanggal"/>
+            </ComboBox>
+        </StackPanel>
+        <StackPanel Grid.Row="3" Grid.Column="2">
+            <TextBlock Text="Format jam" Style="{StaticResource Label}"/>
+            <ComboBox x:Name="TimeFormatBox" HorizontalAlignment="Stretch" SelectionChanged="OnChanged"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3">
+            <TextBlock Text="Format tanggal" Style="{StaticResource Label}"/>
+            <ComboBox x:Name="DateFormatBox" HorizontalAlignment="Stretch" SelectionChanged="OnChanged"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="5" Grid.Column="0">
+            <TextBlock x:Name="ScaleLabel" Style="{StaticResource Label}"/>
+            <Slider x:Name="ScaleSlider" Minimum="0.5" Maximum="2.5" TickFrequency="0.05"
+                    IsSnapToTickEnabled="True" ValueChanged="OnSlider"/>
+        </StackPanel>
+        <StackPanel Grid.Row="5" Grid.Column="2">
+            <TextBlock x:Name="OpacityLabel" Style="{StaticResource Label}"/>
+            <Slider x:Name="OpacitySlider" Minimum="0.2" Maximum="1" TickFrequency="0.05"
+                    IsSnapToTickEnabled="True" ValueChanged="OnSlider"/>
+        </StackPanel>
+
+        <CheckBox x:Name="AutostartBox" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,18,0,0"
+                  Content="Jalankan otomatis saat Windows menyala" Click="OnAutostart"/>
+    </Grid>
+</Window>
