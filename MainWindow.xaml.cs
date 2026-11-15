@@ -26,6 +26,12 @@ public partial class MainWindow : Window
     RotateTransform? _hourRot, _minuteRot, _secondRot;
     Line? _secondHand;
 
+    // Hook WinEvent tidak menerima event dari jendela elevated (mis. Task Manager),
+    // jadi foreground juga dipantau berkala sebagai cadangan.
+    readonly DispatcherTimer _layerTimer = new() { Interval = TimeSpan.FromMilliseconds(250) };
+    IntPtr _lastForeground;
+    bool _raised;
+
     IntPtr _hwnd, _hook;
     Native.WinEventProc? _hookProc;
 
@@ -35,6 +41,8 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         _timer.Tick += (_, _) => Tick(true);
+        _layerTimer.Tick += (_, _) => UpdateDesktopLayer();
+        _layerTimer.Start();
         SourceInitialized += OnSourceInitialized;
         Loaded += (_, _) => { ApplySettings(); _timer.Start(); };
         SizeChanged += (_, _) => ApplyPosition();
@@ -376,6 +384,8 @@ public partial class MainWindow : Window
         }
         Topmost = false;
         SendToBottom();
+        _lastForeground = IntPtr.Zero;
+        _raised = false;
         UpdateDesktopLayer();
     }
 
@@ -393,15 +403,52 @@ public partial class MainWindow : Window
         if (_s.Layer != LayerMode.Desktop || _hwnd == IntPtr.Zero) return;
 
         IntPtr foreground = Native.GetForegroundWindow();
-        if (foreground == IntPtr.Zero) return;
+        if (foreground == IntPtr.Zero || foreground == _lastForeground) return;
         Native.GetWindowThreadProcessId(foreground, out uint pid);
-        if (pid == (uint)Environment.ProcessId) return;
+        if (pid == (uint)Environment.ProcessId)
+        {
+            // Jam sendiri diklik/diseret dan naik ke atas; lapisan harus dievaluasi ulang
+            // begitu jendela lain kembali aktif, termasuk jendela yang sama seperti sebelumnya.
+            _lastForeground = IntPtr.Zero;
+            return;
+        }
 
         if (Native.ClassName(foreground) is "WorkerW" or "Progman")
+        {
+            // Desktop fokus (mis. klik area kosong di monitor lain): angkat jam hanya jika
+            // tidak ada jendela aplikasi yang menutupi jam. Dievaluasi ulang tiap poll.
+            if (ClockCovered()) { if (_raised) { SendToBottom(); _raised = false; } return; }
+            if (_raised) return;
+            _raised = true;
             Native.SetWindowPos(_hwnd, Native.HWND_TOPMOST, 0, 0, 0, 0,
                 Native.SWP_NOMOVE | Native.SWP_NOSIZE | Native.SWP_NOACTIVATE);
-        else
-            SendToBottom();
+            return;
+        }
+
+        _lastForeground = foreground;
+        _raised = false;
+        SendToBottom();
+    }
+
+    // Apakah ada jendela aplikasi yang terlihat dan menimpa area jam?
+    bool ClockCovered()
+    {
+        if (!Native.GetWindowRect(_hwnd, out var clock)) return false;
+        bool covered = false;
+        Native.EnumWindows((h, _) =>
+        {
+            if (h == _hwnd || !Native.IsWindowVisible(h) || Native.IsIconic(h) || Native.IsCloaked(h)) return true;
+            if ((Native.GetWindowLongPtr(h, Native.GWL_EXSTYLE).ToInt64() & Native.WS_EX_TOOLWINDOW) != 0) return true;
+            if (Native.ClassName(h) is "WorkerW" or "Progman" or "Shell_TrayWnd" or "Shell_SecondaryTrayWnd") return true;
+            if (!Native.GetWindowRect(h, out var r) || r.Right <= r.Left || r.Bottom <= r.Top) return true;
+            if (r.Left < clock.Right && r.Right > clock.Left && r.Top < clock.Bottom && r.Bottom > clock.Top)
+            {
+                covered = true;
+                return false;
+            }
+            return true;
+        }, IntPtr.Zero);
+        return covered;
     }
 
     void OnMenuSettings(object sender, RoutedEventArgs e) => ((App)Application.Current).ShowSettings();

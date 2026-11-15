@@ -45,6 +45,28 @@ static class Native
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     static extern int GetClassName(IntPtr hwnd, StringBuilder text, int max);
 
+    public struct RECT { public int Left, Top, Right, Bottom; }
+
+    public delegate bool EnumWindowsProc(IntPtr hwnd, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    public static extern bool EnumWindows(EnumWindowsProc proc, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    public static extern bool IsWindowVisible(IntPtr hwnd);
+
+    [DllImport("user32.dll")]
+    public static extern bool IsIconic(IntPtr hwnd);
+
+    [DllImport("user32.dll")]
+    public static extern bool GetWindowRect(IntPtr hwnd, out RECT rect);
+
+    [DllImport("dwmapi.dll")]
+    static extern int DwmGetWindowAttribute(IntPtr hwnd, int attr, out int value, int size);
+
+    public static bool IsCloaked(IntPtr hwnd) =>
+        DwmGetWindowAttribute(hwnd, 14 /* DWMWA_CLOAKED */, out int v, sizeof(int)) == 0 && v != 0;
+
     public static string ClassName(IntPtr hwnd)
     {
         var sb = new StringBuilder(128);
